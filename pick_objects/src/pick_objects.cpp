@@ -7,13 +7,13 @@ typedef actionlib::SimpleActionClient<move_base_msgs::MoveBaseAction> MoveBaseCl
 
 
 // set goal
-void set_goal(double x, double y, double z, double w, move_base_msgs::MoveBaseGoal& goal) ;
+void set_goal(double x, double y, double w, move_base_msgs::MoveBaseGoal& goal) ;
 
 // send goal to move robot to a goal
 void send_goal( MoveBaseClient& ac, move_base_msgs::MoveBaseGoal& goal) ;
 
 // set goal
-void set_goal(double x, double y, double z, double w, 
+void set_goal(double x, double y, double w, 
   	move_base_msgs::MoveBaseGoal& goal) 
 {
   // set up the frame parameters
@@ -23,7 +23,6 @@ void set_goal(double x, double y, double z, double w,
   // Define a position and orientation for the robot to reach
   goal.target_pose.pose.position.x = x;
   goal.target_pose.pose.position.y = y;
-  //goal.target_pose.pose.orientation.z = z;
   goal.target_pose.pose.orientation.w = w;
 }
 
@@ -58,7 +57,7 @@ int main(int argc, char** argv){
   move_base_msgs::MoveBaseGoal goal1;
 
    // Send the goal position and orientation for the robot to reach
-  set_goal(2.5, 2.0, 0.6, 1.0, goal1) ;
+  set_goal(3.5, 3.5, 1.0, goal1) ;
   ROS_INFO("Sending goal 1");
   send_goal(ac, goal1);
 
@@ -66,7 +65,7 @@ int main(int argc, char** argv){
   ros::Duration(5.0).sleep();
 
   move_base_msgs::MoveBaseGoal goal2;
-  set_goal(-5.0, 3.0, 0.7, 1.0, goal2) ;
+  set_goal(3.0, -0.5, -1.0, goal2) ;
   ROS_INFO("Sending goal 2");
   send_goal(ac, goal2);
 
