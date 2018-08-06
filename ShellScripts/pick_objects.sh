@@ -1,7 +1,7 @@
 #!/bin/sh
 # find where the directory is
 DIR="$( cd "$( dirname "$0" )" && pwd )"
-source $DIR/../../../devel/setup.bash
+#source $DIR/../../../devel/setup.bash
 export TURTLEBOT_GAZEBO_WORLD_FILE=$DIR/../World/test.world
 # launch turtlebot Gazebo with test world
 xterm  -e  " roslaunch turtlebot_gazebo turtlebot_world.launch" &

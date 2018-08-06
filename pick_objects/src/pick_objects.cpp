@@ -55,17 +55,25 @@ int main(int argc, char** argv){
   // Initialize the simple_navigation_goals node
   ros::init(argc, argv, "pick_objects");
 
+  // decide whether to wait for subscribers
+  bool wait_sub = false;
+  if ((argc > 1) && (strcmp(argv[1], "wait_sub") == 0)) {
+  	std::cout << "argc:" << argc  << " argv[1]:" << argv[1] << std::endl;
+	wait_sub = true;
+  }
+
   // create a publisher
   ros::NodeHandle n;
-  //ros::Rate r(1);
   ros::Publisher goal_pub = n.advertise<geometry_msgs::Pose>("/mygoal", 1);
 
-  while (goal_pub.getNumSubscribers() < 1)
-  {
-      if (!ros::ok())
-        return 0;
-      ROS_WARN_ONCE("Please create a subscriber to mygoal!");
-      sleep(1);
+  if (wait_sub) {
+      while (goal_pub.getNumSubscribers() < 1)
+      {
+          if (!ros::ok())
+            return 0;
+          ROS_WARN_ONCE("Please create a subscriber to mygoal!");
+          sleep(1);
+      }
   }
 
   //tell the action client that we want to spin a thread by default
@@ -97,9 +105,12 @@ int main(int argc, char** argv){
   goal_pub.publish(drop_pose);
   ROS_INFO("Sending drop goal ...");
   if (send_goal(ac, goal_drop)) {
-      // reach drop goal
+      // reached drop goal
       goal_pub.publish(drop_pose);
   }
+
+  // pause for 5 sec
+  ros::Duration(5.0).sleep();
 
   return 0;
 }

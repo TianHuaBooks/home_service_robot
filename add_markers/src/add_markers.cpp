@@ -3,11 +3,13 @@
 
 class ObjPickupDrop {
 public:
-	ObjPickupDrop(ros::NodeHandle& nh, ros::Publisher& pub) 
+	ObjPickupDrop(ros::NodeHandle& nh, ros::Publisher& pub, bool sub_my_goal) 
 	  : m_marker_pub(pub) 
 	{
-	    m_goal_sub = nh.subscribe("/mygoal", 1, &ObjPickupDrop::goalCallback, this);
-            ROS_INFO("sub /mygoal");
+	    if (sub_my_goal) {
+	        m_goal_sub = nh.subscribe("/mygoal", 1, &ObjPickupDrop::goalCallback, this);
+                ROS_INFO("sub /mygoal");
+            }
 	}
 	~ObjPickupDrop() {}
 
@@ -15,8 +17,11 @@ public:
 
 	bool waitForSubscriber();
 	void goalCallback(const geometry_msgs::Pose& msg);
-	void addMarkerAt(const geometry_msgs::Pose& pose);
+	void addMarkerAt(const geometry_msgs::Pose& pose, int id=0);
 	void removeMarker();
+
+        // for standalone 
+        void setStateStandalone() { m_state = UNINIT; }
 
 private:
 	const ros::Publisher& m_marker_pub;
@@ -26,7 +31,7 @@ private:
 
 bool ObjPickupDrop::waitForSubscriber()
 {
-	for (int i = 0; (i < 5) && (m_marker_pub.getNumSubscribers() < 1); i++)
+	for (int i = 0; (i < 20) && (m_marker_pub.getNumSubscribers() < 1); i++)
     	{
       	   if (!ros::ok())
        	       return false;
@@ -61,7 +66,7 @@ void ObjPickupDrop::goalCallback(const geometry_msgs::Pose& msg)
 	}
 }
 
-void ObjPickupDrop::addMarkerAt(const geometry_msgs::Pose& pose)
+void ObjPickupDrop::addMarkerAt(const geometry_msgs::Pose& pose, int id)
 {
     visualization_msgs::Marker marker;
     // Set the frame ID and timestamp.  See the TF tutorials for information on these.
@@ -71,7 +76,7 @@ void ObjPickupDrop::addMarkerAt(const geometry_msgs::Pose& pose)
     // Set the namespace and id for this marker.  This serves to create a unique ID
     // Any marker sent with the same namespace and id will overwrite the old one
     marker.ns = "add_markers";
-    marker.id = 0;
+    marker.id = id;
 
     // Set the marker type.  Initially this is CUBE, and cycles between that and SPHERE, ARROW, and CYLINDER
     marker.type = visualization_msgs::Marker::CYLINDER;
@@ -111,6 +116,13 @@ void ObjPickupDrop::removeMarker()
 
 void do_simpleMarker(ros::Publisher& marker_pub);
 
+void set_pose(geometry_msgs::Pose& pose, double x, double y, double w) {
+        pose.position.x = x;
+        pose.position.y = y;
+        pose.orientation.w = w;
+}
+
+
 int main( int argc, char** argv )
 {
   ros::init(argc, argv, "add_markers");
@@ -118,11 +130,38 @@ int main( int argc, char** argv )
   ros::Publisher marker_pub = n.advertise<visualization_msgs::Marker>("visualization_marker", 1);
 
   //do_simpleMarker(marker_pub);
+  bool wait_sub = false;
+  if ((argc > 1) && (strcmp(argv[1], "wait_sub") == 0)) {
+	wait_sub = true;
+        ROS_INFO(" wait for subscriber ...");
+  }
 
   // Create an object pickup and drop
-  ObjPickupDrop obj(n, marker_pub);
-  if (!obj.waitForSubscriber())
-      ROS_WARN("ros failed!");
+  ObjPickupDrop obj(n, marker_pub, wait_sub);
+  if (wait_sub) {
+      // to work with pickup objects in home service
+      if (!obj.waitForSubscriber())
+          ROS_WARN("ros failed!");
+  } else {
+      // add makers standalone case
+      geometry_msgs::Pose pick_up_pose;
+      set_pose(pick_up_pose, 2.5, 3.5, 1.0);
+      ROS_INFO("add pick up marker @(2.5, 3.5) ");
+      obj.setStateStandalone();
+      obj.addMarkerAt(pick_up_pose);
+
+      // pause for 5 sec
+      ros::Duration(5.0).sleep();
+      obj.removeMarker();
+      ROS_INFO("removed pick up marker @(2.5, 3.5) ");
+      ros::Duration(5.0).sleep();
+
+      geometry_msgs::Pose drop_pose;
+      set_pose(drop_pose, 3.0, -0.5, -1.0);
+      ROS_INFO("add drop marker @(3.0, -0.5)");
+      obj.setStateStandalone();
+      obj.addMarkerAt(drop_pose);
+  }
 
   ros::spin();
 

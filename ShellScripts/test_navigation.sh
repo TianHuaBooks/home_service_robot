@@ -6,7 +6,7 @@ export TURTLEBOT_GAZEBO_WORLD_FILE=$DIR/../World/test.world
 xterm  -e  " roslaunch turtlebot_gazebo turtlebot_world.launch" &
 sleep 5
 # launch ACML
-xterm  -e  " roslaunch turtlebot_gazebo amcl_demo.launch" &
+xterm  -e  " roslaunch turtlebot_gazebo amcl_demo.launch map_file:=$DIR/../World/map.yaml"&
 sleep 5
 # launch rviz
 xterm  -e  " roslaunch turtlebot_rviz_launchers view_navigation.launch" &
